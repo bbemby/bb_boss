@@ -1,4 +1,6 @@
-# 🌸 Sakura_embyboss 初学练习版（重构中）
+# 🌸 bb_boss
+
+> 本项目基于 [berry8838/Sakura_embyboss](https://github.com/berry8838/Sakura_embyboss) 修改，新增 `/user/whitelist` 接口供 [cfqm](https://github.com/bbemby/cfqm) 查询白名单用户。
 
 <p align="center">
 <img src="image/bot2.png" alt="bot"><br>
