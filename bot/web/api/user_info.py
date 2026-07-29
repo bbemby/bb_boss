@@ -25,6 +25,17 @@ async def user_info(tg: str):
     return {"code": 200, "data": {"tg": user.tg, "iv": user.iv, "name": user.name, "embyid": user.embyid, "lv": user.lv, "cr": user.cr, "ex": user.ex}}
 
 
+@route.get("/whitelist")
+async def whitelist(emby_id: str):
+    """
+    查询指定 emby_id 是否为白名单用户（lv='a'）
+    """
+    user = sql_get_emby(emby_id)
+    if not user:
+        return {"whitelist": False}
+    return {"whitelist": user.lv == 'a'}
+
+
 @route.post("/update_credit")
 async def update_credit(request: Request):
     """
