@@ -38,6 +38,7 @@ def judge_start_ikb(is_admin: bool, account: bool) -> InlineKeyboardMarkup:
         d.append(['🎯 签到', 'checkin'])
     lines = array_chunk(d, 2)
     if is_admin: lines.append([['👮🏻‍♂️ admin', 'manage']])
+    lines.append([('💎 白名单购买', 'https://store.111848.xyz/products/bb', 'url')])
     keyword = ikb(lines)
     return keyword
 
