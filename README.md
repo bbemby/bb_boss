@@ -16,14 +16,197 @@
 </p>
 <br>
 
-## 📜 项目说明（重构中，暂停更新）
+## 📜 项目说明
 
-- **用Telegram管理Emby用户**（开服） 安装使用 👉 [项目文档](https://berry8838.github.io/Sakura_embyboss)
-- **推荐使用 Debian 11操作系统，AMD处理器架构。目前ARM也支持（如有问题请反馈issue）**
-- 解决不了大的技术问题（因为菜菜），如需要，请自行fork修改，~~如果能提点有意思的pr更好啦~~
+- **用 Telegram 管理 Emby 用户**（开服）
+- **推荐使用 Debian 11 操作系统，AMD 处理器架构。目前 ARM 也支持（如有问题请反馈 issue）**
+- 本项目基于 [berry8838/Sakura_embyboss](https://github.com/berry8838/Sakura_embyboss) 修改，新增 `/user/whitelist` 接口供 [cfqm](https://github.com/bbemby/cfqm) 查询白名单用户
 - 反馈请尽量 issue，看到会处理
 
-> **声明：本项目仅供学习交流使用，仅作为辅助工具借助tg平台方便用户管理自己的媒体库成员，对用户的其他行为及内容毫不知情**
+> **声明：本项目仅供学习交流使用，仅作为辅助工具借助 tg 平台方便用户管理自己的媒体库成员，对用户的其他行为及内容毫不知情**
+
+---
+
+## 🚀 部署教程
+
+> 以下内容根据 [Sakura_embyboss Wiki](https://berry8838.github.io/Sakura_embyboss/deploy/introduce/) 整理并适配到本仓库。
+
+### 一、部署方式选择
+
+推荐 **Docker Compose** 部署，维护简单。如需魔改或二次开发，可选择 **源码部署**。
+
+---
+
+### 二、Docker Compose 部署
+
+#### 1. 安装 Docker
+
+```bash
+curl -fsSL https://get.docker.com | bash -s docker
+curl -L "https://github.com/docker/compose/releases/download/v2.10.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+chmod +x /usr/local/bin/docker-compose
+systemctl start docker
+systemctl enable docker
+```
+
+#### 2. 拉取代码
+
+```bash
+git clone https://github.com/bbemby/bb_boss.git /root/bb_boss
+cd /root/bb_boss
+chmod +x main.py
+```
+
+#### 3. 复制配置模板
+
+```bash
+cp config_example.json config.json
+```
+
+#### 4. 填写 config.json
+
+**必填项：**
+
+| 类型 | 字段 | 说明 |
+|---|---|---|
+| Telegram Bot | `bot_name` | Bot 的 username |
+| | `bot_token` | 从 [@BotFather](https://t.me/BotFather) 获取 |
+| | `owner_api` / `owner_hash` | 从 [my.telegram.org](https://my.telegram.org/auth) 获取 |
+| | `owner` | 拥有者的 Telegram 用户 ID |
+| | `group` | 授权管理群组 ID，如 `[-1001869392674]` |
+| | `main_group` / `chanel` | 群组/频道 username 或邀请链接后缀 |
+| Emby | `emby_api` | Emby API Key |
+| | `emby_url` | Emby 访问地址，末尾不带 `/` |
+| | `emby_line` | 展示给普通用户的 Emby 地址（MarkdownV2） |
+| MySQL | `db_host` / `db_user` / `db_pwd` / `db_name` / `db_port` | 数据库连接信息 |
+
+**自动更新：** 本仓库 `auto_update.git_repo` 已改为 `bbemby/bb_boss`，魔改用户请保持此值，以免被原仓库覆盖。
+
+#### 5. 启动
+
+```bash
+docker-compose up -d
+```
+
+查看日志：
+
+```bash
+docker logs -f embyboss
+```
+
+#### 6. 更新
+
+```bash
+cd /root/bb_boss
+docker-compose down
+docker-compose pull
+docker-compose up -d
+```
+
+---
+
+### 三、源码部署
+
+```bash
+sudo apt install python3-pip
+git clone https://github.com/bbemby/bb_boss.git /root/bb_boss
+cd /root/bb_boss
+chmod +x main.py
+pip3 install -r requirements.txt
+```
+
+准备 MySQL 后，复制并填写 `config.json`，然后试运行：
+
+```bash
+python3 main.py
+```
+
+无报错后配置 systemd：
+
+```bash
+mv embyboss.service /etc/systemd/system/embyboss.service
+systemctl daemon-reload
+systemctl start embyboss
+systemctl enable embyboss
+```
+
+常用命令：
+
+```bash
+systemctl status embyboss
+systemctl restart embyboss
+journalctl -u embyboss -f
+```
+
+---
+
+### 四、更新与维护
+
+#### 源码更新
+
+```bash
+cd /root/bb_boss
+git fetch --all
+git reset --hard origin/master
+git pull origin master
+pip3 install -r requirements.txt
+systemctl restart embyboss
+```
+
+> 警告：源码更新会覆盖本地代码修改，魔改用户请先备份。
+
+#### 数据库备份
+
+在 `config.json` 中开启：
+
+```json
+{
+  "db_is_docker": true,
+  "db_docker_name": "mysql",
+  "db_backup_dir": "./db_backup",
+  "db_backup_maxcount": 7,
+  "schedall": { "backup_db": true }
+}
+```
+
+#### 高风险操作前建议先备份
+
+执行 `/paolu`、`/banall`、`/unbanall`、`/only_rm_emby`、`/only_rm_record`、`/coinsclear`、`/restore_from_db` 前建议先备份数据库。
+
+---
+
+### 五、常见问题
+
+#### 1. 自动更新覆盖了本地修改
+
+检查 `config.json` 中 `auto_update.git_repo` 是否为 `bbemby/bb_boss`。
+
+#### 2. `/user/whitelist` 接口
+
+用于 cfqm 查询白名单用户：
+
+```
+GET http://<服务器>:8838/user/whitelist?emby_id=<Emby用户名>&token=<bot_token>
+```
+
+返回：
+
+```json
+{"whitelist": true}   // 白名单用户（lv='a'）
+{"whitelist": false}  // 非白名单用户
+```
+
+#### 3. cfqm 连接返回 403
+
+`/user/*` 接口需要 `?token=<bot_token>` 鉴权，请在 cfqm 中配置 `EMBYBOSS_BOT_TOKEN`。
+
+---
+
+### 六、相关项目
+
+- [cfqm](https://github.com/bbemby/cfqm) — Cloudflare Workers 版 Emby 事件通知中间层
+- [berry8838/Sakura_embyboss](https://github.com/berry8838/Sakura_embyboss) — 原项目
+
 <br>
 
 ## 💐 Our Contributors
