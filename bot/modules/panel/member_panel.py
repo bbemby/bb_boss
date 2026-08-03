@@ -854,14 +854,15 @@ async def change_name(_, call):
     if e.lv not in ('a', 'b'):
         return await callAnswer(call, '💢 当前等级无法修改用户名', True)
     money_name = getattr(config, 'money', '币')
-    if int(e.us or 0) < 488:
-        return await callAnswer(call, f'💢 余额不足，修改用户名需要 488 {money_name}，你当前只有 {e.us or 0} {money_name}', True)
+    current_coin = int(e.iv or 0)
+    if current_coin < 488:
+        return await callAnswer(call, f'💢 余额不足，修改用户名需要 488 {money_name}，你当前只有 {current_coin} {money_name}', True)
 
     send = await editMessage(
         call,
         '✏️ **【修改 Emby 用户名】**\n\n'
         f'· 当前用户名：**{e.name}**\n'
-        f'· 修改费用：**488 {money_name}**，你当前余额：**{e.us}** {money_name}\n'
+        f'· 修改费用：**488 {money_name}**，你当前余额：**{current_coin}** {money_name}\n'
         '· 用户名不限制中/英文/emoji，🚫**特殊字符**\n\n'
         '请在 120s 内回复新的用户名，退出请点 /cancel')
     if send is False:
@@ -895,13 +896,13 @@ async def change_name(_, call):
         return await editMessage(call, f'💢 修改失败：{info}\n\n请稍后再试或联系管理。', back_members_ikb)
 
     # 扣除积分并更新数据库
-    new_us = int(e.us or 0) - 488
-    if sql_update_emby(Emby.tg == call.from_user.id, name=new_name, us=new_us):
+    new_iv = int(e.iv or 0) - 488
+    if sql_update_emby(Emby.tg == call.from_user.id, name=new_name, iv=new_iv):
         await editMessage(
             call,
             f'✅ **用户名修改成功！**\n\n'
             f'· 新用户名：**{new_name}**\n'
-            f'· 扣除 488 {money_name}，当前余额：**{new_us}** {money_name}',
+            f'· 扣除 488 {money_name}，当前余额：**{new_iv}** {money_name}',
             back_members_ikb)
         LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 {money_name}')
     else:
