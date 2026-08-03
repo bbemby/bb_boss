@@ -881,9 +881,6 @@ class Embyservice(metaclass=Singleton):
             except Exception as e:
                 LOGGER.warning(f"禁用/启用用户刷新失败: {emby_id} - {e}")
 
-            # 强制踢掉该用户所有会话
-            await self._kick_user_sessions(emby_id)
-
             LOGGER.info(f"修改用户名成功: {emby_id} -> {new_name}")
             return True, result.data
         except Exception as e:
