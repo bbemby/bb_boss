@@ -896,7 +896,7 @@ async def change_name(_, call):
         return await editMessage(call, f'💢 修改失败：{info}\n\n请稍后再试或联系管理。', back_members_ikb)
 
     # 改名成功，强制重置密码（让第三方App保存的token失效）
-    new_pwd = pwd_create(8)
+    new_pwd = await pwd_create(8)
     if await emby.emby_reset(emby_id=e.embyid, new_password=new_pwd):
         pwd_text = new_pwd
     else:
