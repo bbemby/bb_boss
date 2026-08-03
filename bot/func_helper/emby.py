@@ -283,7 +283,7 @@ class Embyservice(metaclass=Singleton):
         """
         try:
             LOGGER.info(f"开始删除用户: {emby_id}")
-            result = await self._request('DELETE', f'/emby/Users/{emby_id}')
+            result = await self._request('DELETE', f'/emby/Users/{emby_id}?api_key={self.api_key}')
             if result.success:
                 LOGGER.info(f"成功删除用户: {emby_id}")
                 return True
