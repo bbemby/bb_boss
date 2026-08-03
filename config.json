@@ -1,0 +1,58 @@
+{
+  "bot_name": "test_bot",
+  "bot_token": "123:abc",
+  "owner_api": 1,
+  "owner_hash": "abc",
+  "owner": 123,
+  "group": [
+    -100
+  ],
+  "main_group": "group",
+  "chanel": "chanel",
+  "bot_photo": "https://example.com/a.png",
+  "admins": [],
+  "emby_api": "abc",
+  "emby_url": "http://127.0.0.1:8096",
+  "emby_line": "emby",
+  "db_host": "127.0.0.1",
+  "db_user": "root",
+  "db_pwd": "123",
+  "db_name": "embyboss",
+  "db_port": 3306,
+  "proxy": {},
+  "open": {},
+  "money": "花币",
+  "checkin": true,
+  "exchange": true,
+  "whitelist": true,
+  "invite": false,
+  "leave_ban": true,
+  "uplays": true,
+  "emby_block": [],
+  "extra_emby_libs": [],
+  "tz_ad": "",
+  "tz_api": "",
+  "tz_id": "",
+  "tz_version": "v0",
+  "ranks": {
+    "logo": "SAKURA"
+  },
+  "schedall": {},
+  "backup_db": {},
+  "anti_channel": {},
+  "kk": {},
+  "emby_whitelist_line": "",
+  "blocked_clients": [],
+  "partition_libs": {},
+  "red_envelope": {},
+  "auto_update": {},
+  "api": {
+    "status": true,
+    "http_url": "0.0.0.0",
+    "http_port": 8838,
+    "allow_origins": [
+      "*"
+    ]
+  },
+  "moviepilot": {}
+}

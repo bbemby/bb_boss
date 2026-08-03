@@ -853,14 +853,15 @@ async def change_name(_, call):
         return await callAnswer(call, '💢 你没有 Emby 账户，无法修改用户名', True)
     if e.lv not in ('a', 'b'):
         return await callAnswer(call, '💢 当前等级无法修改用户名', True)
+    money_name = getattr(config, 'money', '币')
     if int(e.us or 0) < 488:
-        return await callAnswer(call, f'💢 余额不足，修改用户名需要 488 币，你当前只有 {e.us or 0} 币', True)
+        return await callAnswer(call, f'💢 余额不足，修改用户名需要 488 {money_name}，你当前只有 {e.us or 0} {money_name}', True)
 
     send = await editMessage(
         call,
         '✏️ **【修改 Emby 用户名】**\n\n'
         f'· 当前用户名：**{e.name}**\n'
-        f'· 修改费用：**488 币**，你当前余额：**{e.us}** 币\n'
+        f'· 修改费用：**488 {money_name}**，你当前余额：**{e.us}** {money_name}\n'
         '· 用户名不限制中/英文/emoji，🚫**特殊字符**\n\n'
         '请在 120s 内回复新的用户名，退出请点 /cancel')
     if send is False:
@@ -900,9 +901,9 @@ async def change_name(_, call):
             call,
             f'✅ **用户名修改成功！**\n\n'
             f'· 新用户名：**{new_name}**\n'
-            f'· 扣除 488 币，当前余额：**{new_us}** 币',
+            f'· 扣除 488 {money_name}，当前余额：**{new_us}** {money_name}',
             back_members_ikb)
-        LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 币')
+        LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 {money_name}')
     else:
         await editMessage(call, '💢 Emby 用户名已修改，但数据库更新失败，请联系管理。', back_members_ikb)
         LOGGER.error(f'【修改用户名】用户 {call.from_user.id} Emby 改名成功但数据库更新失败')
