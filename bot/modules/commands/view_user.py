@@ -3,8 +3,9 @@ from pyrogram import filters
 from bot import bot, bot_name
 from bot.func_helper.filters import admins_on_filter
 from bot.func_helper.msg_utils import editMessage
-from bot.func_helper.fix_bottons import whitelist_page_ikb, normaluser_page_ikb,devices_page_ikb 
+from bot.func_helper.fix_bottons import whitelist_page_ikb, normaluser_page_ikb, devices_page_ikb, name_change_history_page_ikb
 from bot.sql_helper.sql_emby import get_all_emby, Emby
+from bot.sql_helper.sql_name_change import sql_get_name_change_history, sql_count_name_change_history
 from bot.func_helper.msg_utils import callAnswer
 import math
 
@@ -101,3 +102,34 @@ async def user_devices(_, call):
         text += f'用户名: [{name}](https://t.me/{bot_name}?start=userip-{name}) | 设备: {device_count} | IP: {ip_count}\n'
     text += f"\n第 {page} 页"
     await editMessage(call, text, buttons=devices_page_ikb(has_prev, has_next, page))
+
+@bot.on_callback_query(filters.regex('^name_change_history$|^name_change_history:') & admins_on_filter)
+async def name_change_history(_, call):
+    if call.data == 'name_change_history':
+        page = 1
+        await callAnswer(call, '🔍 改名记录')
+    else:
+        page = int(call.data.split(':')[1])
+        await callAnswer(call, f'🔍 打开第{page}页')
+
+    page_size = 20
+    offset = (page - 1) * page_size
+
+    total = sql_count_name_change_history()
+    total_pages = math.ceil(total / page_size) if total > 0 else 1
+    records = sql_get_name_change_history(limit=page_size, offset=offset)
+
+    text = '**📝 Emby 用户名改名记录**\n\n'
+    if not records:
+        text += '暂无记录\n'
+    else:
+        for r in records:
+            tg_link = f'[{r.tg_username or r.tg}](tg://user?id={r.tg})'
+            text += (
+                f'TG: {tg_link} (`{r.tg}`)\n'
+                f'· 改名: `{r.old_name or "无"}` → `{r.new_name}`\n'
+                f'· 消耗: {r.cost} 子弹  |  时间: `{r.created_at.strftime("%Y-%m-%d %H:%M")}`\n\n'
+            )
+    text += f'第 {page} 页, 共 {total_pages} 页, 共 {total} 条'
+
+    await editMessage(call, text, buttons=name_change_history_page_ikb(total_pages, page))

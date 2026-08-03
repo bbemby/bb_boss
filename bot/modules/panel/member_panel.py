@@ -28,6 +28,7 @@ from bot.modules.commands.exchange import rgs_code
 from bot.sql_helper.sql_code import sql_count_c_code
 from bot.sql_helper.sql_emby import sql_get_emby, sql_update_emby, Emby
 from bot.sql_helper.sql_emby2 import sql_get_emby2, sql_delete_emby2
+from bot.sql_helper.sql_name_change import sql_add_name_change_history
 
 # 创号函数
 async def create_user(_, call, stats):
@@ -901,7 +902,17 @@ async def change_name(_, call):
         pwd_text = new_pwd
     else:
         pwd_text = e.pwd if e.pwd else '（密码未变更，请联系管理）'
-       
+
+    # 记录改名历史
+    tg_username = call.from_user.username or call.from_user.first_name or str(call.from_user.id)
+    sql_add_name_change_history(
+        tg=call.from_user.id,
+        tg_username=tg_username,
+        embyid=e.embyid,
+        old_name=e.name,
+        new_name=new_name,
+        cost=488
+    )
 
     # 扣除积分
     new_iv = int(e.iv or 0) - 488

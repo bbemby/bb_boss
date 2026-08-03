@@ -149,7 +149,8 @@ async def cr_page_server():
 gm_ikb_content = ikb([[('⭕ 注册状态', 'open-menu'), ('🎟️ 创建兑换码', 'cr_link')],
                       [('💊 查询注册', 'ch_link'), ('🏬 兑换设置', 'set_renew')],
                       [('👥 用户列表', 'normaluser'), ('👑 白名单列表', 'whitelist'), ('💠 设备列表', 'user_devices')],
-                      [('🌏 定时', 'schedall'), ('🕹️ 主界面', 'back_start'), ('其他 🪟', 'back_config')]])
+                      [('📝 改名记录', 'name_change_history'), ('🌏 定时', 'schedall'), ('🕹️ 主界面', 'back_start')],
+                      [('其他 🪟', 'back_config')]])
 
 
 def open_menu_ikb(openstats, timingstats) -> InlineKeyboardMarkup:
@@ -301,6 +302,23 @@ def devices_page_ikb( has_prev: bool, has_next: bool, page: int) -> InlineKeyboa
     buttons.append([('🔙 返回', 'manage')])
     keyboard = ikb(buttons)
     return keyboard
+
+
+def name_change_history_page_ikb(total_page: int, current_page: int) -> InlineKeyboardMarkup:
+    keyboard = InlineKeyboard()
+    keyboard.paginate(total_page, current_page, 'name_change_history:{number}')
+    next = InlineButton('⏭️ 后退+5', f'name_change_history:{current_page + 5}')
+    previous = InlineButton('⏮️ 前进-5', f'name_change_history:{current_page - 5}')
+    followUp = [InlineButton('🔙 Back', 'manage')]
+    if total_page > 5:
+        if current_page - 5 >= 1:
+            followUp.append(previous)
+        if current_page + 5 < total_page:
+            followUp.append(next)
+    keyboard.row(*followUp)
+    return keyboard
+
+
 async def favorites_page_ikb(total_page: int, current_page: int) -> InlineKeyboardMarkup:
     keyboard = InlineKeyboard()
     keyboard.paginate(total_page, current_page, 'page_my_favorites:{number}')
