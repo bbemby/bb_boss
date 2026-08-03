@@ -895,16 +895,26 @@ async def change_name(_, call):
     if not success:
         return await editMessage(call, f'💢 修改失败：{info}\n\n请稍后再试或联系管理。', back_members_ikb)
 
-    # 扣除积分并更新数据库
+    # 改名成功，强制重置密码（让第三方App保存的token失效）
+    new_pwd = pwd_create(8)
+    if await emby.emby_reset(emby_id=e.embyid, new_password=new_pwd):
+        pwd_text = new_pwd
+    else:
+        pwd_text = e.pwd if e.pwd else '（密码未变更，请联系管理）'
+       
+
+    # 扣除积分
     new_iv = int(e.iv or 0) - 488
     if sql_update_emby(Emby.tg == call.from_user.id, name=new_name, iv=new_iv):
         await editMessage(
             call,
             f'✅ **用户名修改成功！**\n\n'
             f'· 新用户名：**{new_name}**\n'
-            f'· 扣除 488 {money_name}，当前余额：**{new_iv}** {money_name}',
+            f'· 新密码：`{pwd_text}`\n'
+            f'· 扣除 488 {money_name}，当前余额：**{new_iv}** {money_name}\n\n'
+            f'⚠️ 旧用户名和旧密码均已失效，请用新用户名+新密码重新登录。',
             back_members_ikb)
-        LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 {money_name}')
+        LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 {money_name}，新密码已重置')
     else:
         await editMessage(call, '💢 Emby 用户名已修改，但数据库更新失败，请联系管理。', back_members_ikb)
         LOGGER.error(f'【修改用户名】用户 {call.from_user.id} Emby 改名成功但数据库更新失败')

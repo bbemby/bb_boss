@@ -306,7 +306,7 @@ class Embyservice(metaclass=Singleton):
             
             # 第一步：重置密码
             pwd_data = pwd_policy(emby_id, stats=True, new=None)
-            result = await self._request('POST', f'/emby/Users/{emby_id}/Password', json=pwd_data)
+            result = await self._request('POST', f'/emby/Users/{emby_id}/Password?api_key={self.api_key}', json=pwd_data)
             if not result.success:
                 LOGGER.error(f"重置密码失败: {emby_id} - {result.error}")
                 return False
@@ -322,7 +322,7 @@ class Embyservice(metaclass=Singleton):
             else:
                 # 设置新密码
                 pwd_data2 = pwd_policy(emby_id, new=new_password)
-                result = await self._request('POST', f'/emby/Users/{emby_id}/Password', json=pwd_data2)
+                result = await self._request('POST', f'/emby/Users/{emby_id}/Password?api_key={self.api_key}', json=pwd_data2)
                 if not result.success:
                     LOGGER.error(f"设置新密码失败: {emby_id} - {result.error}")
                     return False
