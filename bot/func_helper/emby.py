@@ -799,6 +799,53 @@ class Embyservice(metaclass=Singleton):
             LOGGER.error(f"查询用户异常: {emby_name} - {str(e)}")
             return False, {'error': str(e)}
 
+    async def _disable_user(self, emby_id: str, disable: bool = True) -> bool:
+        """
+        启用/禁用 Emby 用户
+        :param emby_id: 用户ID
+        :param disable: True 禁用, False 启用
+        :return: 是否成功
+        """
+        try:
+            user_ok, user_info = await self.user(emby_id)
+            if not user_ok:
+                return False
+            policy = user_info.get("Policy", {})
+            policy["IsDisabled"] = disable
+            user_info["Policy"] = policy
+            result = await self._request('POST', f'/emby/Users/{emby_id}?api_key={self.api_key}', json=user_info)
+            if result.success:
+                LOGGER.info(f"用户{'禁用' if disable else '启用'}成功: {emby_id}")
+                return True
+            else:
+                LOGGER.error(f"用户{'禁用' if disable else '启用'}失败: {emby_id} - {result.error}")
+                return False
+        except Exception as e:
+            LOGGER.error(f"用户{'禁用' if disable else '启用'}异常: {emby_id} - {str(e)}")
+            return False
+
+    async def _kick_user_sessions(self, emby_id: str):
+        """
+        强制结束某用户的所有会话
+        """
+        try:
+            result = await self._request('GET', f'/emby/Sessions?UserId={emby_id}&api_key={self.api_key}')
+            if not result.success:
+                LOGGER.warning(f"获取用户会话失败: {emby_id} - {result.error}")
+                return
+            sessions = result.data or []
+            for sess in sessions:
+                session_id = sess.get('Id')
+                if not session_id:
+                    continue
+                del_result = await self._request('DELETE', f'/emby/Sessions/{session_id}?api_key={self.api_key}')
+                if del_result.success:
+                    LOGGER.info(f"踢掉会话成功: {session_id}")
+                else:
+                    LOGGER.warning(f"踢掉会话失败: {session_id} - {del_result.error}")
+        except Exception as e:
+            LOGGER.warning(f"踢掉用户会话异常: {emby_id} - {e}")
+
     async def emby_rename(self, emby_id: str, new_name: str) -> Tuple[bool, Union[str, Dict]]:
         """
         修改 Emby 用户名
@@ -822,17 +869,23 @@ class Embyservice(metaclass=Singleton):
             user_info["ConnectUserName"] = ""
             user_info["ConnectLinkType"] = "None"
             result = await self._request('POST', f'/emby/Users/{emby_id}?api_key={self.api_key}', json=user_info)
-            if result.success:
-                # 强制登出该用户所有会话
-                try:
-                    await self._request('POST', f'/emby/Sessions/Logout?api_key={self.api_key}', params={'UserId': emby_id})
-                except Exception as e:
-                    LOGGER.warning(f"强制登出用户会话失败: {emby_id} - {e}")
-                LOGGER.info(f"修改用户名成功: {emby_id} -> {new_name}")
-                return True, result.data
-            else:
+            if not result.success:
                 LOGGER.error(f"修改用户名失败: {emby_id} -> {new_name} - {result.error}")
                 return False, f"🤕修改用户名失败: {result.error}"
+
+            # 改名后禁用再启用用户，强制刷新 Emby 认证索引，确保旧用户名失效
+            try:
+                await self._disable_user(emby_id, disable=True)
+                await asyncio.sleep(0.5)
+                await self._disable_user(emby_id, disable=False)
+            except Exception as e:
+                LOGGER.warning(f"禁用/启用用户刷新失败: {emby_id} - {e}")
+
+            # 强制踢掉该用户所有会话
+            await self._kick_user_sessions(emby_id)
+
+            LOGGER.info(f"修改用户名成功: {emby_id} -> {new_name}")
+            return True, result.data
         except Exception as e:
             LOGGER.error(f"修改用户名异常: {emby_id} -> {new_name} - {str(e)}")
             return False, str(e)
