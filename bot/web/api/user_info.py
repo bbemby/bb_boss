@@ -28,12 +28,14 @@ async def user_info(tg: str):
 @route.get("/whitelist")
 async def whitelist(emby_id: str):
     """
-    查询指定 emby_id 是否为白名单用户（lv='a'）
+    查询指定 emby_id 是否为白名单用户（lv='a'），并返回监控开关状态
     """
     user = sql_get_emby(emby_id)
     if not user:
-        return {"whitelist": False}
-    return {"whitelist": user.lv == 'a'}
+        return {"whitelist": False, "privacy_mode": False}
+    is_whitelist = user.lv == 'a'
+    privacy_mode = bool(user.privacy_mode) if is_whitelist else False
+    return {"whitelist": is_whitelist, "privacy_mode": privacy_mode}
 
 
 @route.post("/update_credit")

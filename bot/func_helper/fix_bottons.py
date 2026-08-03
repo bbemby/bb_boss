@@ -53,7 +53,7 @@ judge_group_ikb = ikb([[('🌟 频道入口 ', f't.me/{chanel}', 'url'),
 """members ↓"""
 
 
-def members_ikb(is_admin: bool = False, account: bool = False) -> InlineKeyboardMarkup:
+def members_ikb(is_admin: bool = False, account: bool = False, lv: str = 'd', privacy_mode: bool = False) -> InlineKeyboardMarkup:
     """
     判断用户面板
     """
@@ -62,6 +62,10 @@ def members_ikb(is_admin: bool = False, account: bool = False) -> InlineKeyboard
                     [('🎬 显示/隐藏', 'embyblock'), ('⭕ 重置密码', 'reset')],
                     [('💖 我的收藏', 'my_favorites'),('💠 我的设备', 'my_devices')],
                     ]
+        # 白名单用户显示监控开关
+        if lv == 'a':
+            btn_text = '🔒 监控已开' if privacy_mode else '🔒 监控已关'
+            normal.append([(btn_text, 'monitor_switch')])
         if moviepilot.status:
             normal.append([('🍿 点播中心', 'download_center')])
         normal.append([('♻️ 主界面', 'back_start')])

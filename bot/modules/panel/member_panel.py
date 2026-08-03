@@ -99,11 +99,14 @@ async def members(_, call):
            f"**· 🍒 积分{sakura_b}** | {us}\n" \
            f"**· 💠 账号名称** | [{name}](tg://user?id={call.from_user.id})\n" \
            f"**· 🚨 到期时间** | {ex}"
+    e = sql_get_emby(tg=call.from_user.id)
+    raw_lv = getattr(e, 'lv', 'd') if e else 'd'
+    privacy_mode = bool(getattr(e, 'privacy_mode', False)) if e else False
     if not embyid:
         is_admin = judge_admins(call.from_user.id)
-        await editMessage(call, text, members_ikb(is_admin, False))
+        await editMessage(call, text, members_ikb(is_admin, False, raw_lv, privacy_mode))
     else:
-        await editMessage(call, text, members_ikb(account=True))
+        await editMessage(call, text, members_ikb(account=True, lv=raw_lv, privacy_mode=privacy_mode))
 
 
 # 创建账户
@@ -819,3 +822,22 @@ async def my_devices(_, call):
             if not chunk_text.strip():
                 continue
             await sendMessage(call.message, chunk_text, buttons=close_it_ikb)
+
+
+# 白名单用户监控开关：控制 cfqm 中用户名是否脱敏显示
+@bot.on_callback_query(filters.regex('^monitor_switch$'))
+async def monitor_switch(_, call):
+    e = sql_get_emby(tg=call.from_user.id)
+    if not e:
+        return await callAnswer(call, '⚠️ 数据库没有你，请重新 /start录入', True)
+    if e.lv != 'a':
+        return await callAnswer(call, '💢 只有白名单用户才能使用监控开关', True)
+    new_mode = not bool(e.privacy_mode)
+    if sql_update_emby(Emby.tg == call.from_user.id, privacy_mode=new_mode):
+        status_text = '已开启' if new_mode else '已关闭'
+        await callAnswer(call, f'🔒 监控开关{status_text}，播放通知中的用户名将只显示首字', True)
+        LOGGER.info(f'【监控开关】用户 {call.from_user.id} 将隐私模式设为 {new_mode}')
+        # 刷新用户面板
+        await members(_, call)
+    else:
+        await callAnswer(call, '💢 开关切换失败，请联系管理', True)
