@@ -62,6 +62,9 @@ def members_ikb(is_admin: bool = False, account: bool = False, lv: str = 'd', pr
                     [('🎬 显示/隐藏', 'embyblock'), ('⭕ 重置密码', 'reset')],
                     [('💖 我的收藏', 'my_favorites'),('💠 我的设备', 'my_devices')],
                     ]
+        # a、b 等级用户可修改 Emby 用户名，每次扣 488 us
+        if lv in ('a', 'b'):
+            normal.append([('✏️ 修改用户名 (488币)', 'change_name')])
         # 白名单用户显示监控开关
         if lv == 'a':
             btn_text = '🔒 监控已开' if privacy_mode else '🔒 监控已关'

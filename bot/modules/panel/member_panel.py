@@ -841,3 +841,68 @@ async def monitor_switch(_, call):
         await members(_, call)
     else:
         await callAnswer(call, '💢 开关切换失败，请联系管理', True)
+
+
+# a、b 等级用户修改 Emby 用户名，每次扣除 488 us
+@bot.on_callback_query(filters.regex('^change_name$'))
+async def change_name(_, call):
+    e = sql_get_emby(tg=call.from_user.id)
+    if not e:
+        return await callAnswer(call, '⚠️ 数据库没有你，请重新 /start录入', True)
+    if not e.embyid:
+        return await callAnswer(call, '💢 你没有 Emby 账户，无法修改用户名', True)
+    if e.lv not in ('a', 'b'):
+        return await callAnswer(call, '💢 当前等级无法修改用户名', True)
+    if int(e.us or 0) < 488:
+        return await callAnswer(call, f'💢 余额不足，修改用户名需要 488 币，你当前只有 {e.us or 0} 币', True)
+
+    send = await editMessage(
+        call,
+        '✏️ **【修改 Emby 用户名】**\n\n'
+        f'· 当前用户名：**{e.name}**\n'
+        f'· 修改费用：**488 币**，你当前余额：**{e.us}** 币\n'
+        '· 用户名不限制中/英文/emoji，🚫**特殊字符**\n\n'
+        '请在 120s 内回复新的用户名，退出请点 /cancel')
+    if send is False:
+        return
+
+    m = await callListen(call, 120, buttons=back_members_ikb)
+    if m is False:
+        return
+
+    if m.text == '/cancel':
+        await m.delete()
+        return await editMessage(call, '__您已经取消输入__ **会话已结束！**', back_members_ikb)
+
+    await m.delete()
+    new_name = m.text.strip()
+
+    # 简单校验
+    if not new_name:
+        return await editMessage(call, '⚠️ 用户名不能为空，请重试。', back_members_ikb)
+    if len(new_name) > 30:
+        return await editMessage(call, '⚠️ 用户名太长了，最多 30 个字符。', back_members_ikb)
+    if new_name == e.name:
+        return await editMessage(call, '⚠️ 新用户名和当前用户名相同，无需修改。', back_members_ikb)
+    if any(c in new_name for c in ['/', '\\', ':', '*', '?', '"', '<', '>', '|']):
+        return await editMessage(call, '⚠️ 用户名包含非法字符，请重试。', back_members_ikb)
+
+    # 执行改名
+    await editMessage(call, f'🎯 正在将用户名修改为 **{new_name}**，请稍候...')
+    success, info = await emby.emby_rename(emby_id=e.embyid, new_name=new_name)
+    if not success:
+        return await editMessage(call, f'💢 修改失败：{info}\n\n请稍后再试或联系管理。', back_members_ikb)
+
+    # 扣除积分并更新数据库
+    new_us = int(e.us or 0) - 488
+    if sql_update_emby(Emby.tg == call.from_user.id, name=new_name, us=new_us):
+        await editMessage(
+            call,
+            f'✅ **用户名修改成功！**\n\n'
+            f'· 新用户名：**{new_name}**\n'
+            f'· 扣除 488 币，当前余额：**{new_us}** 币',
+            back_members_ikb)
+        LOGGER.info(f'【修改用户名】用户 {call.from_user.id} 将 {e.name} 改名为 {new_name}，扣除 488 币')
+    else:
+        await editMessage(call, '💢 Emby 用户名已修改，但数据库更新失败，请联系管理。', back_members_ikb)
+        LOGGER.error(f'【修改用户名】用户 {call.from_user.id} Emby 改名成功但数据库更新失败')

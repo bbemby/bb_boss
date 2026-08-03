@@ -799,6 +799,37 @@ class Embyservice(metaclass=Singleton):
             LOGGER.error(f"查询用户异常: {emby_name} - {str(e)}")
             return False, {'error': str(e)}
 
+    async def emby_rename(self, emby_id: str, new_name: str) -> Tuple[bool, Union[str, Dict]]:
+        """
+        修改 Emby 用户名
+        :param emby_id: 用户ID
+        :param new_name: 新用户名
+        :return: (是否成功, 错误信息或新用户信息)
+        """
+        try:
+            # 检查新用户名是否已被占用
+            exist_ok, exist_info = await self.get_emby_user_by_name(new_name)
+            if exist_ok:
+                LOGGER.warning(f"用户名已被占用: {new_name}")
+                return False, "🤕该用户名已被其他用户使用"
+            # 获取原用户信息
+            user_ok, user_info = await self.user(emby_id)
+            if not user_ok:
+                LOGGER.error(f"获取用户信息失败: {emby_id}")
+                return False, user_info
+            # 更新用户名
+            user_info["Name"] = new_name
+            result = await self._request('POST', f'/emby/Users/{emby_id}?api_key={self.api_key}', json=user_info)
+            if result.success:
+                LOGGER.info(f"修改用户名成功: {emby_id} -> {new_name}")
+                return True, result.data
+            else:
+                LOGGER.error(f"修改用户名失败: {emby_id} -> {new_name} - {result.error}")
+                return False, f"🤕修改用户名失败: {result.error}"
+        except Exception as e:
+            LOGGER.error(f"修改用户名异常: {emby_id} -> {new_name} - {str(e)}")
+            return False, str(e)
+
     async def add_favorite_items(self, emby_id: str, item_id: str) -> bool:
         """
         添加收藏项目
