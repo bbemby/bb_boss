@@ -909,7 +909,7 @@ async def change_name(_, call):
         await editMessage(
             call,
             f'✅ **用户名修改成功！**\n\n'
-            f'· 新用户名：**{new_name}**\n'
+            f'· 新用户名：`{new_name}`\n'
             f'· 新密码：`{pwd_text}`\n'
             f'· 扣除 488 {money_name}，当前余额：**{new_iv}** {money_name}\n\n'
             f'⚠️ 旧用户名和旧密码均已失效，请用新用户名+新密码重新登录。',
