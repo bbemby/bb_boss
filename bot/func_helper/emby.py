@@ -817,10 +817,17 @@ class Embyservice(metaclass=Singleton):
             if not user_ok:
                 LOGGER.error(f"获取用户信息失败: {emby_id}")
                 return False, user_info
-            # 更新用户名
+            # 更新用户名，同时清空 Connect 用户名避免旧用户名继续可登录
             user_info["Name"] = new_name
+            user_info["ConnectUserName"] = ""
+            user_info["ConnectLinkType"] = "None"
             result = await self._request('POST', f'/emby/Users/{emby_id}?api_key={self.api_key}', json=user_info)
             if result.success:
+                # 强制登出该用户所有会话
+                try:
+                    await self._request('POST', f'/emby/Sessions/Logout?api_key={self.api_key}', params={'UserId': emby_id})
+                except Exception as e:
+                    LOGGER.warning(f"强制登出用户会话失败: {emby_id} - {e}")
                 LOGGER.info(f"修改用户名成功: {emby_id} -> {new_name}")
                 return True, result.data
             else:
