@@ -765,7 +765,7 @@ class Embyservice(metaclass=Singleton):
         :return: (是否成功, 用户信息或错误信息)
         """
         try:
-            result = await self._request('GET', f'/emby/Users/{emby_id}')
+            result = await self._request('GET', f'/emby/Users/{emby_id}?api_key={self.api_key}')
             if result.success:
                 LOGGER.debug(f"获取用户信息成功: {emby_id}")
                 return True, result.data
