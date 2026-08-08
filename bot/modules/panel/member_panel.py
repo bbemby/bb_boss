@@ -832,7 +832,7 @@ async def monitor_switch(_, call):
     if not e:
         return await callAnswer(call, '⚠️ 数据库没有你，请重新 /start录入', True)
     if e.lv != 'a':
-        return await callAnswer(call, '💢 只有白名单用户才能使用监控开关', True)
+        return await callAnswer(call, '💢 需要开通白名单才能使用该功能', True)
     new_mode = not bool(e.privacy_mode)
     if sql_update_emby(Emby.tg == call.from_user.id, privacy_mode=new_mode):
         status_text = '已开启' if new_mode else '已关闭'

@@ -66,10 +66,9 @@ def members_ikb(is_admin: bool = False, account: bool = False, lv: str = 'd', pr
         if lv in ('a', 'b'):
             money_name = getattr(config, 'money', '币')
             normal.append([(f'✏️ 修改用户名 (488{money_name})', 'change_name')])
-        # 白名单用户显示监控开关
-        if lv == 'a':
-            btn_text = '🔒 监控已开' if privacy_mode else '🔒 监控已关'
-            normal.append([(btn_text, 'monitor_switch')])
+        # 所有用户显示监控开关（非白名单用户点击后会提示需开通白名单）
+        btn_text = '🔒 监控已开' if privacy_mode else '🔒 监控已关'
+        normal.append([(btn_text, 'monitor_switch')])
         if moviepilot.status:
             normal.append([('🍿 点播中心', 'download_center')])
         normal.append([('♻️ 主界面', 'back_start')])
