@@ -79,11 +79,16 @@ class RanksDraw:
                     resize = (110, 160)
                     xy = (169 + 302 * col, 140 + 304 * row)
             else:
-                # 竖版海报左右两列，每列 5 部电影
+                # 竖版海报左右两列，每列 5 部电影。
+                # 两列在原模板中采用错位布局：左列从 y=162 开始，
+                # 右列从 y=57 开始；不能给右列复用左列的起始高度。
                 col, row = divmod(index, 5)
                 prisuccess, data = await emby.primary(item_id=item_id)
                 resize = (144, 210)
-                xy = (601 + 169 * col, 162 + 230 * row)
+                if col == 0:
+                    xy = (601, 162 + 230 * row)
+                else:
+                    xy = (770, 57 + 232 * row)
             if not prisuccess:
                 logging.error(f'【ranks_draw】获取封面图失败 {item_id} {name}')
             # 名称显示偏移
