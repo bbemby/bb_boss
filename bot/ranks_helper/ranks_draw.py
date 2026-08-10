@@ -31,14 +31,14 @@ class RanksDraw:
         bg_path = os.path.join('bot', 'ranks_helper', "resource", "bg")
         if weekly:
             if backdrop:
-                mask_path = os.path.join('bot', 'ranks_helper', "resource", "week_ranks_mask_backdrop.png")
+                mask_path = os.path.join('bot', 'ranks_helper', "resource", "week_movie_ranks_mask_backdrop.png")
             else:
-                mask_path = os.path.join('bot', 'ranks_helper', "resource", "week_ranks_mask.png")
+                mask_path = os.path.join('bot', 'ranks_helper', "resource", "week_movie_ranks_mask.png")
         else:
             if backdrop:
-                mask_path = os.path.join('bot', 'ranks_helper', "resource", "day_ranks_mask_backdrop.png")
+                mask_path = os.path.join('bot', 'ranks_helper', "resource", "day_movie_ranks_mask_backdrop.png")
             else:
-                mask_path = os.path.join('bot', 'ranks_helper', "resource", "day_ranks_mask.png")
+                mask_path = os.path.join('bot', 'ranks_helper', "resource", "day_movie_ranks_mask.png")
         font_path = os.path.join('bot', 'ranks_helper', "resource", 'font', "PingFang Bold.ttf")
         # 随机调取背景
         bg_list = os.listdir(bg_path)
@@ -64,22 +64,26 @@ class RanksDraw:
         font_offset_y = 190
         resize = (0, 0)
         xy = (0, 0)
-        for i in movies[:5]:
+        for i in movies[:10]:
             # 榜单项数据
             user_id, item_id, item_type, name, count, duarion = tuple(i)
             # 封面图像获取
             if self.backdrop:
+                # 横版海报分成上下两排，每排 5 部电影
+                row, col = divmod(index, 5)
                 resize = (242, 160)
-                xy = (103 + 302 * index, 140)
+                xy = (103 + 302 * col, 140 + 304 * row)
                 prisuccess, data = await emby.backdrop(item_id=item_id)
                 if not prisuccess:
                     prisuccess, data = await emby.primary(item_id=item_id)
                     resize = (110, 160)
-                    xy = (169 + 302 * index, 140)
+                    xy = (169 + 302 * col, 140 + 304 * row)
             else:
+                # 竖版海报左右两列，每列 5 部电影
+                col, row = divmod(index, 5)
                 prisuccess, data = await emby.primary(item_id=item_id)
                 resize = (144, 210)
-                xy = (601, 162 + 230 * index)
+                xy = (601 + 169 * col, 162 + 230 * row)
             if not prisuccess:
                 logging.error(f'【ranks_draw】获取封面图失败 {item_id} {name}')
             # 名称显示偏移
@@ -97,15 +101,12 @@ class RanksDraw:
                 logging.error(f'【ranks_draw】绘制封面图失败 {item_id} {name} {e}')
                 pass
             if not prisuccess:
-                # 如果没有封面图，使用name来代替
-                if self.backdrop:
-                    draw_text_psd_style(text, (123 + 302 * index, 140), name, temp_font, 126)
-                else:
-                    draw_text_psd_style(text, (601, 162 + 230 * index), name, temp_font, 126)
-            # 绘制 播放次数、影片名称
+                # 如果没有封面图，使用 name 代替
+                draw_text_psd_style(text, xy, name, temp_font, 126)
+            # 绘制播放次数、影片名称
             if draw_text:
-                draw_text_psd_style(text, (601 + 130, 163 + (230 * index)), str(count), self.font_count, 126)
-                draw_text_psd_style(text, (601, 163 + font_offset_y + (230 * index)), name, temp_font, 126)
+                draw_text_psd_style(text, (xy[0] + resize[0] - 14, xy[1]), str(count), self.font_count, 126)
+                draw_text_psd_style(text, (xy[0], xy[1] + resize[1] - 18), name, temp_font, 126)
             index += 1
         # 剧集Y偏移
         index = 0
@@ -197,7 +198,7 @@ class RanksDraw:
         # 合并绘制
         index = 0
         font_offset_y = 190
-        for i in movies[:5]:
+        for i in movies[:10]:
             # 榜单项数据
             user_id, item_id, item_type, name, count, duarion = tuple(i)
             print(f'{item_type} {item_id} {name} {count}')

@@ -66,16 +66,12 @@ async def send_multi_message_with_photo(chat_id, photo_path, caption, parse_mode
 async def day_ranks(pin_mode=True):
     draw = ranks_draw.RanksDraw(ranks.logo, backdrop=ranks.backdrop)
     LOGGER.info("【ranks_task】定时任务 正在推送日榜")
-    success, movies = await emby.get_emby_report(types='Movie', days=1)
+    success, movies = await emby.get_emby_report(types='Movie', days=1, limit=10)
     if not success:
-        LOGGER.error('【ranks_task】推送日榜失败，获取Movies数据失败!')
+        LOGGER.error('【ranks_task】推送日榜失败，获取电影数据失败!')
         return
-    success, tvs = await emby.get_emby_report(types='Episode', days=1)
-    if not success:
-        LOGGER.error('【ranks_task】推送日榜失败，获取Episode数据失败!')
-        return
-    # 绘制海报
-    await draw.draw(movies, tvs)
+    # 日榜海报仅展示电影前 10 名
+    await draw.draw(movies)
     path = draw.save()
 
     try:
@@ -92,15 +88,7 @@ async def day_ranks(pin_mode=True):
             time = await convert_s(int(duarion))
             tmp += str(i + 1) + ". " + name + "\n播放次数: " + str(count) + "  时长:" + time + "\n"
         payload = tmp
-    if tvs:
-        tmp = "\n**▎电视剧:**\n\n"
-        for i, tv in enumerate(tvs[:10]):
-            user_id, item_id, item_type, name, count, duarion = tuple(tv)
-            time = await convert_s(int(duarion))
-            tmp += str(i + 1) + ". " + name + "\n播放次数: " + str(count) + "  时长:" + time + "\n"
-        payload += tmp
-    
-    payload = f"**【{ranks.logo} 播放日榜】**\n\n" + payload + "\n#DayRanks" + "  " + date.today().strftime('%Y-%m-%d')
+    payload = f"**【{ranks.logo} 电影播放日榜 TOP 10】**\n\n" + payload + "\n#DayRanks" + "  " + date.today().strftime('%Y-%m-%d')
 
     # 使用多消息发送功能
     sent_messages = await send_multi_message_with_photo(
@@ -120,16 +108,12 @@ async def day_ranks(pin_mode=True):
 async def week_ranks(pin_mode=True):
     draw = ranks_draw.RanksDraw(ranks.logo, weekly=True, backdrop=ranks.backdrop)
     LOGGER.info("【ranks_task】定时任务 正在推送周榜")
-    success, movies = await emby.get_emby_report(types='Movie', days=7)
+    success, movies = await emby.get_emby_report(types='Movie', days=7, limit=10)
     if not success:
-        LOGGER.warning('【ranks_task】推送周榜失败，没有获取到Movies数据!')
+        LOGGER.warning('【ranks_task】推送周榜失败，没有获取到电影数据!')
         return
-    success, tvs = await emby.get_emby_report(types='Episode', days=7)
-    if not success:
-        LOGGER.error('【ranks_task】推送周榜失败，没有获取到Episode数据!')
-        return
-    # 绘制海报
-    await draw.draw(movies, tvs)
+    # 周榜海报仅展示电影前 10 名
+    await draw.draw(movies)
     path = draw.save()
 
     try:
@@ -147,15 +131,7 @@ async def week_ranks(pin_mode=True):
             time = await convert_s(int(duarion))
             tmp += str(i + 1) + ". " + name + "\n播放次数: " + str(count) + "  时长:" + time + "\n"
         payload = tmp
-    if tvs:
-        tmp = "\n**▎电视剧:**\n\n"
-        for i, tv in enumerate(tvs[:10]):
-            user_id, item_id, item_type, name, count, duarion = tuple(tv)
-            time = await convert_s(int(duarion))
-            tmp += str(i + 1) + ". " + name + "\n播放次数: " + str(count) + "  时长:" + time + "\n"
-        payload += tmp
-    
-    payload = f"**【{ranks.logo} 播放周榜】**\n\n" + payload + "\n#WeekRanks" + "  " + date.today().strftime('%Y-%m-%d')
+    payload = f"**【{ranks.logo} 电影播放周榜 TOP 10】**\n\n" + payload + "\n#WeekRanks" + "  " + date.today().strftime('%Y-%m-%d')
     
     # 使用多消息发送功能
     sent_messages = await send_multi_message_with_photo(
