@@ -73,7 +73,11 @@ class Uplaysinfo:
                         leaderboard_data.append([member_info["tg"], new_iv, f'{medal}{emby_name}', points])
 
                     formatted_time = await convert_s(int(play_record[1]))
-                    page_data += f'{medal}**第{cn2an.an2cn(rank)}名** | [{emby_name}](https://www.google.com/search?q={tg})\n' \
+                    if tg == 'None':
+                        user_display = emby_name
+                    else:
+                        user_display = f'[{emby_name}](tg://user?id={tg})'
+                    page_data += f'{medal}**第{cn2an.an2cn(rank)}名** | {user_display}\n' \
                                  f'  观影时长 | {formatted_time}\n'
 
                 page_data += f'\n#UPlaysRank {datetime.now(timezone(timedelta(hours=8))).strftime("%Y-%m-%d")}'
