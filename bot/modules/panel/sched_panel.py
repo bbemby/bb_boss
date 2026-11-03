@@ -58,10 +58,13 @@ args_dict = {
 
 def set_all_sche():
     for key, value in action_dict.items():
+        action = action_dict[key]
+        args = args_dict[key]
         if getattr(schedall, key):
-            action = action_dict[key]
-            args = args_dict[key]
             scheduler.add_job(action, 'cron', **args)
+            LOGGER.info(f"【定时任务】已注册: {key} ({args.get('id')})")
+        else:
+            LOGGER.info(f"【定时任务】已跳过: {key} (schedall.{key}=False)")
 
 
 set_all_sche()

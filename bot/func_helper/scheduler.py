@@ -74,4 +74,6 @@ class Scheduler(metaclass=Singleton):
             LOGGER.error(f"Failed to modify a job: {e}")
 
 scheduler = Scheduler()
-# scheduler.add_job(check_expired, 'cron', hour=1, id='check_expired')
+# 定时任务统一由 bot/modules/panel/sched_panel.py 的 set_all_sche() 注册，
+# 开关在 config.json 的 schedall.<name>。到期检测对应 schedall.check_ex，
+# 这里不要重复 add_job（同 id 会冲突）。
