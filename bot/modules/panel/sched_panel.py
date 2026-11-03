@@ -105,7 +105,12 @@ async def check_ex_admin(_, msg):
         pass
     if confirm == 'true':
         send = await msg.reply("🍥 正在运行 【到期检测】。。。")
-        await asyncio.gather(check_expired(), send.edit("✅ 【到期检测结束】"))
+        try:
+            await check_expired()
+            await send.edit("✅ 【到期检测结束】")
+        except Exception as e:
+            LOGGER.error(f"【到期检测】执行失败: {e}")
+            await send.edit(f"❌ 【到期检测失败】{e}")
     else:
         await msg.reply("🔔 请输入 `/check_ex true` 确认运行")
 
